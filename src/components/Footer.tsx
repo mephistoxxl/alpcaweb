@@ -59,7 +59,7 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-4 h-4 text-accent shrink-0" />
-                <span>contacto@alpca.ec</span>
+                <span>alpcontadoresyauditores@gmail.com</span>
               </li>
             </ul>
           </div>

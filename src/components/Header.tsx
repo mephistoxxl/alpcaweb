@@ -1,7 +1,29 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
+
+const navItems = [
+  { href: "/", label: "Inicio" },
+  { href: "/sas", label: "SAS" },
+  { href: "/firma-electronica", label: "Firma Electrónica" },
+  { href: "/servicios", label: "Servicios" },
+  { href: "/facturador", label: "Facturador" },
+  { href: "/contacto", label: "Contacto" },
+];
 
 export default function Header() {
+  const pathname = usePathname();
+
+  const isActiveRoute = (href: string) => {
+    if (href === "/") {
+      return pathname === "/";
+    }
+
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
   return (
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-secondary/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -19,12 +41,20 @@ export default function Header() {
           </Link>
 
           <nav className="hidden md:flex gap-8 items-center">
-            <Link href="/" className="text-sm font-medium text-slate-600 hover:text-accent transition-colors">Inicio</Link>
-            <Link href="/sas" className="text-sm font-medium text-slate-600 hover:text-accent transition-colors">SAS</Link>
-            <Link href="/firma-electronica" className="text-sm font-medium text-slate-600 hover:text-accent transition-colors">Firma Electrónica</Link>
-            <Link href="/servicios" className="text-sm font-medium text-slate-600 hover:text-accent transition-colors">Servicios</Link>
-            <Link href="/facturador" className="text-sm font-medium text-slate-600 hover:text-accent transition-colors">Facturador</Link>
-            <Link href="/contacto" className="text-sm font-medium text-slate-600 hover:text-accent transition-colors">Contacto</Link>
+            {navItems.map((item) => {
+              const isActive = isActiveRoute(item.href);
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={isActive ? "page" : undefined}
+                  className={`text-sm font-medium pb-1 border-b-2 transition-colors ${isActive ? "text-accent border-accent" : "text-slate-600 border-transparent hover:text-accent"}`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
 
           <div>

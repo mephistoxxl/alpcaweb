@@ -35,3 +35,35 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 # alpcaweb
+
+## Formulario de contacto funcional (correo + captcha)
+
+El formulario de [contacto](http://localhost:3000/contacto) ahora envía correos reales a:
+
+`alpcontadoresyauditores@gmail.com`
+
+### 1) Configurar variables de entorno
+
+1. Duplica `.env.example` como `.env.local`.
+2. Completa los valores, especialmente `SMTP_PASS` (App Password de Gmail).
+
+Variables usadas:
+
+- `SMTP_USER` (por defecto: `alpcontadoresyauditores@gmail.com`)
+- `SMTP_PASS` (requerido)
+- `SMTP_HOST` (por defecto: `smtp.gmail.com`)
+- `SMTP_PORT` (por defecto: `465`)
+- `CONTACT_CAPTCHA_SECRET` (secreto para firmar el captcha)
+
+### 2) Ejecutar el proyecto
+
+```bash
+npm run dev
+```
+
+### 3) Probar el formulario
+
+1. Ve a `/contacto`.
+2. Llena el formulario.
+3. Resuelve el captcha.
+4. Envía la consulta.
