@@ -1,4 +1,3 @@
-import nodemailer from "nodemailer";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -24,7 +23,7 @@ function escapeHtml(value: string): string {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
+    .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 }
 
@@ -40,6 +39,48 @@ async function verifyRecaptcha(token: string): Promise<boolean> {
 
   const data = (await res.json()) as { success: boolean };
   return data.success === true;
+}
+
+async function sendViaZeptoMail(payload: {
+  from: string;
+  to: string;
+  replyTo: string;
+  subject: string;
+  htmlBody: string;
+  textBody: string;
+}): Promise<void> {
+  const apiKey = process.env.ZEPTOMAIL_API_KEY;
+  const emailFrom = process.env.EMAIL_FROM;
+  const emailTo = process.env.EMAIL_TO;
+
+  if (!apiKey || !emailFrom || !emailTo) {
+    throw new Error("Faltan variables de entorno: ZEPTOMAIL_API_KEY, EMAIL_FROM o EMAIL_TO");
+  }
+
+  const body = JSON.stringify({
+    from: { address: payload.from },
+    to: [{ email_address: { address: payload.to } }],
+    reply_to: [{ address: payload.replyTo }],
+    subject: payload.subject,
+    htmlbody: payload.htmlBody,
+    textbody: payload.textBody,
+  });
+
+  const res = await fetch("https://api.zeptomail.com/v1.1/email", {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "content-type": "application/json",
+      authorization: `Zoho-enczapikey ${apiKey}`,
+    },
+    body,
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error("ZeptoMail error:", res.status, errorText);
+    throw new Error(`ZeptoMail respondió con status ${res.status}`);
+  }
 }
 
 export async function POST(request: Request) {
@@ -68,55 +109,41 @@ export async function POST(request: Request) {
     }
 
     if (servicio.length < 5) {
-      return NextResponse.json({ error: "Describe brevemente el servicio que buscas." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Describe brevemente el servicio que buscas." },
+        { status: 400 },
+      );
     }
 
     const recaptchaSecretConfigured = Boolean(process.env.RECAPTCHA_SECRET_KEY);
 
     if (recaptchaSecretConfigured) {
       if (!recaptchaToken) {
-        return NextResponse.json({ error: "Por favor completa el captcha." }, { status: 400 });
+        return NextResponse.json(
+          { error: "Por favor completa el captcha." },
+          { status: 400 },
+        );
       }
 
       const recaptchaOk = await verifyRecaptcha(recaptchaToken);
       if (!recaptchaOk) {
-        return NextResponse.json({ error: "Captcha inválido. Intenta nuevamente." }, { status: 400 });
+        return NextResponse.json(
+          { error: "Captcha inválido. Intenta nuevamente." },
+          { status: 400 },
+        );
       }
     }
 
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
-    const smtpHost = process.env.SMTP_HOST || "smtp.zeptomail.com";
-    const smtpPort = Number.parseInt(process.env.SMTP_PORT || "587", 10);
-    const emailFrom = process.env.EMAIL_FROM;
-    const emailTo = process.env.EMAIL_TO;
-
-    if (!smtpPass || !emailFrom || !emailTo) {
-      console.error("Faltan variables de entorno: SMTP_PASS, EMAIL_FROM o EMAIL_TO");
-      return NextResponse.json(
-        { error: "Error de configuración del servidor. Contacta al administrador." },
-        { status: 500 },
-      );
-    }
-
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
-    });
-
+    const emailFrom = process.env.EMAIL_FROM!;
+    const emailTo = process.env.EMAIL_TO!;
     const nombreCompleto = apellido ? `${nombre} ${apellido}` : nombre;
 
-    await transporter.sendMail({
-      from: `"Sitio Web ALPCA" <${emailFrom}>`,
+    await sendViaZeptoMail({
+      from: emailFrom,
       to: emailTo,
       replyTo: email,
       subject: `Nuevo contacto web - ${servicio}`,
-      text: [
+      textBody: [
         "Nuevo mensaje desde el formulario de contacto de ALPCA",
         "",
         `Nombre: ${nombreCompleto}`,
@@ -126,7 +153,7 @@ export async function POST(request: Request) {
       ]
         .filter(Boolean)
         .join("\n"),
-      html: `
+      htmlBody: `
         <h2 style="color:#482845;">Nuevo mensaje desde el formulario de contacto de ALPCA</h2>
         <table style="border-collapse:collapse;width:100%;max-width:560px;">
           <tr><td style="padding:8px 12px;font-weight:bold;background:#f5f0f4;">Nombre</td><td style="padding:8px 12px;">${escapeHtml(nombreCompleto)}</td></tr>
@@ -142,7 +169,7 @@ export async function POST(request: Request) {
       { status: 200 },
     );
   } catch (error) {
-    console.error("Error en envio de formulario de contacto", error);
+    console.error("Error en envio de formulario de contacto:", error);
     return NextResponse.json(
       { error: "No se pudo enviar tu consulta. Intenta nuevamente." },
       { status: 500 },
