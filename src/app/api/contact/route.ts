@@ -71,13 +71,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Describe brevemente el servicio que buscas." }, { status: 400 });
     }
 
-    if (!recaptchaToken) {
-      return NextResponse.json({ error: "Por favor completa el captcha." }, { status: 400 });
-    }
+    const recaptchaSecretConfigured = Boolean(process.env.RECAPTCHA_SECRET_KEY);
 
-    const recaptchaOk = await verifyRecaptcha(recaptchaToken);
-    if (!recaptchaOk) {
-      return NextResponse.json({ error: "Captcha inválido. Intenta nuevamente." }, { status: 400 });
+    if (recaptchaSecretConfigured) {
+      if (!recaptchaToken) {
+        return NextResponse.json({ error: "Por favor completa el captcha." }, { status: 400 });
+      }
+
+      const recaptchaOk = await verifyRecaptcha(recaptchaToken);
+      if (!recaptchaOk) {
+        return NextResponse.json({ error: "Captcha inválido. Intenta nuevamente." }, { status: 400 });
+      }
     }
 
     const smtpUser = process.env.SMTP_USER;
