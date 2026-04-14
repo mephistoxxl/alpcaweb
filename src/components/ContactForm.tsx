@@ -53,8 +53,10 @@ export default function ContactForm() {
       return;
     }
 
-    const recaptchaToken = recaptchaRef.current?.getValue();
-    if (!recaptchaToken) {
+    const recaptchaToken = recaptchaRef.current?.getValue() ?? "";
+    const sitekeyConfigured = Boolean(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY);
+
+    if (sitekeyConfigured && !recaptchaToken) {
       setFeedback({ type: "error", message: "Por favor completa el captcha de verificación." });
       return;
     }
@@ -231,12 +233,18 @@ export default function ContactForm() {
       </div>
 
       {/* Google reCAPTCHA v2 */}
-      <div className="mt-4">
-        <ReCAPTCHA
-          ref={recaptchaRef}
-          sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
-        />
-      </div>
+      {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ? (
+        <div className="mt-4">
+          <ReCAPTCHA
+            ref={recaptchaRef}
+            sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
+          />
+        </div>
+      ) : (
+        <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-3 py-2 rounded-lg mt-4">
+          reCAPTCHA no configurado en entorno local. Funcionará correctamente en producción.
+        </p>
+      )}
 
       {/* Error */}
       {feedback.type === "error" && (
