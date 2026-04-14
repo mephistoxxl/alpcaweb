@@ -1,20 +1,17 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useCallback, useEffect, useState } from "react";
-import { Loader2, RefreshCcw, Send } from "lucide-react";
+import { ChangeEvent, FormEvent, useRef, useState } from "react";
+import ReCAPTCHA from "react-google-recaptcha";
+import { CheckCircle, Loader2, XCircle } from "lucide-react";
 
 type FormData = {
-  name: string;
+  nombre: string;
+  apellido: string;
   email: string;
-  service: string;
-  message: string;
-  captchaAnswer: string;
+  telefono: string;
+  servicio: string;
+  consentimiento: boolean;
   website: string;
-};
-
-type CaptchaChallenge = {
-  question: string;
-  token: string;
 };
 
 type Feedback = {
@@ -23,74 +20,59 @@ type Feedback = {
 };
 
 const INITIAL_FORM: FormData = {
-  name: "",
+  nombre: "",
+  apellido: "",
   email: "",
-  service: "Constitución de SAS",
-  message: "",
-  captchaAnswer: "",
+  telefono: "",
+  servicio: "",
+  consentimiento: false,
   website: "",
 };
 
 export default function ContactForm() {
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
-  const [captcha, setCaptcha] = useState<CaptchaChallenge | null>(null);
-  const [isLoadingCaptcha, setIsLoadingCaptcha] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<Feedback>({ type: "idle", message: "" });
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
-  const loadCaptcha = useCallback(async () => {
-    setIsLoadingCaptcha(true);
-
-    try {
-      const response = await fetch("/api/contact/captcha", {
-        method: "GET",
-        cache: "no-store",
-      });
-
-      if (!response.ok) {
-        throw new Error("No se pudo cargar el captcha.");
-      }
-
-      const data = (await response.json()) as CaptchaChallenge;
-      setCaptcha(data);
-    } catch {
-      setCaptcha(null);
-    } finally {
-      setIsLoadingCaptcha(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadCaptcha();
-  }, [loadCaptcha]);
-
-  const handleChange = (
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
-  ) => {
+  const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target;
-    setFormData((previous) => ({ ...previous, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleCheckbox = (event: ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({ ...prev, consentimiento: event.target.checked }));
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setFeedback({ type: "idle", message: "" });
 
-    if (!captcha?.token) {
-      setFeedback({ type: "error", message: "No se pudo cargar el captcha. Recárgalo e intenta de nuevo." });
+    if (!formData.consentimiento) {
+      setFeedback({ type: "error", message: "Debes aceptar el consentimiento para continuar." });
+      return;
+    }
+
+    const recaptchaToken = recaptchaRef.current?.getValue();
+    if (!recaptchaToken) {
+      setFeedback({ type: "error", message: "Por favor completa el captcha de verificación." });
       return;
     }
 
     setIsSubmitting(true);
-    setFeedback({ type: "idle", message: "" });
 
     try {
       const response = await fetch("/api/contact", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...formData,
-          captchaToken: captcha.token,
+          nombre: formData.nombre,
+          apellido: formData.apellido,
+          email: formData.email,
+          telefono: formData.telefono,
+          servicio: formData.servicio,
+          recaptchaToken,
+          website: formData.website,
         }),
       });
 
@@ -99,143 +81,53 @@ export default function ContactForm() {
       if (!response.ok) {
         setFeedback({
           type: "error",
-          message: data.error || "No se pudo enviar tu consulta. Intenta nuevamente.",
+          message: data.error ?? "No se pudo enviar tu consulta. Intenta nuevamente.",
         });
-        setFormData((previous) => ({ ...previous, captchaAnswer: "" }));
-        await loadCaptcha();
+        recaptchaRef.current?.reset();
         return;
       }
 
       setFeedback({
         type: "success",
-        message: data.message || "Tu consulta fue enviada correctamente.",
+        message: data.message ?? "Tu consulta fue enviada correctamente.",
       });
       setFormData(INITIAL_FORM);
-      await loadCaptcha();
+      recaptchaRef.current?.reset();
     } catch {
       setFeedback({
         type: "error",
         message: "Error de conexión. Verifica tu internet e intenta nuevamente.",
       });
-      setFormData((previous) => ({ ...previous, captchaAnswer: "" }));
-      await loadCaptcha();
+      recaptchaRef.current?.reset();
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  return (
-    <form className="space-y-6" onSubmit={handleSubmit} noValidate>
-      <div className="grid md:grid-cols-2 gap-6">
-        <div>
-          <label htmlFor="name" className="block text-sm font-semibold text-slate-700 mb-2">
-            Nombre o Razón Social
-          </label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-            minLength={3}
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-slate-700 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
-            placeholder="Ej. Empresa S.A."
-          />
-        </div>
-        <div>
-          <label htmlFor="email" className="block text-sm font-semibold text-slate-700 mb-2">
-            Correo Electrónico
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-slate-700 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
-            placeholder="correo@empresa.com"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label htmlFor="service" className="block text-sm font-semibold text-slate-700 mb-2">
-          Servicio de Interés
-        </label>
-        <select
-          id="service"
-          name="service"
-          value={formData.service}
-          onChange={handleChange}
-          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-slate-700 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+  if (feedback.type === "success") {
+    return (
+      <div className="flex flex-col items-center justify-center text-center gap-4 min-h-[380px]">
+        <CheckCircle className="w-16 h-16 text-green-500" />
+        <h3 className="text-2xl font-bold text-[#482845]">¡Mensaje enviado!</h3>
+        <p className="text-slate-600 text-sm leading-relaxed max-w-xs">
+          Gracias por contactarnos. Un asesor de ALPCA se comunicará contigo a la brevedad.
+        </p>
+        <button
+          onClick={() => setFeedback({ type: "idle", message: "" })}
+          className="mt-2 text-sm text-[#fe6333] font-semibold underline underline-offset-2 hover:text-[#eb5b2f] transition-colors"
         >
-          <option>Constitución de SAS</option>
-          <option>Emisión de Firma Electrónica</option>
-          <option>Contabilidad e Impuestos SRI</option>
-          <option>Nómina y Legalizaciones MDT</option>
-          <option>Software Facturador Electrónico</option>
-          <option>Consultoría General</option>
-        </select>
+          Enviar otro mensaje
+        </button>
       </div>
+    );
+  }
 
-      <div>
-        <label htmlFor="message" className="block text-sm font-semibold text-slate-700 mb-2">
-          ¿Cómo podemos ayudarte?
-        </label>
-        <textarea
-          id="message"
-          name="message"
-          rows={5}
-          value={formData.message}
-          onChange={handleChange}
-          required
-          minLength={10}
-          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-slate-700 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all resize-none"
-          placeholder="Cuéntanos brevemente sobre la situación de tu negocio..."
-        ></textarea>
-      </div>
-
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <label htmlFor="captchaAnswer" className="block text-sm font-semibold text-slate-700 mb-1">
-              Verificación de seguridad
-            </label>
-            <p className="text-sm text-slate-600">
-              {isLoadingCaptcha ? "Cargando captcha..." : captcha?.question || "No se pudo cargar el captcha."}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => void loadCaptcha()}
-            className="p-2 rounded-md border border-slate-300 text-slate-600 hover:text-accent hover:border-accent transition-colors"
-            aria-label="Recargar captcha"
-          >
-            <RefreshCcw className={`w-4 h-4 ${isLoadingCaptcha ? "animate-spin" : ""}`} />
-          </button>
-        </div>
-
-        <input
-          type="text"
-          id="captchaAnswer"
-          name="captchaAnswer"
-          inputMode="numeric"
-          value={formData.captchaAnswer}
-          onChange={handleChange}
-          required
-          disabled={isLoadingCaptcha || !captcha?.token || isSubmitting}
-          className="mt-3 w-full bg-white border border-slate-200 rounded-lg px-4 py-3 text-slate-700 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
-          placeholder="Escribe el resultado"
-        />
-      </div>
-
+  return (
+    <form className="space-y-4" onSubmit={(e) => void handleSubmit(e)} noValidate>
+      {/* Honeypot anti-spam */}
       <div className="hidden" aria-hidden="true">
-        <label htmlFor="website">Sitio web</label>
         <input
           type="text"
-          id="website"
           name="website"
           value={formData.website}
           onChange={handleChange}
@@ -244,28 +136,130 @@ export default function ContactForm() {
         />
       </div>
 
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <label htmlFor="cf-nombre" className="text-[15px] font-semibold text-[#482845]">
+            Nombre*
+          </label>
+          <input
+            id="cf-nombre"
+            name="nombre"
+            type="text"
+            required
+            value={formData.nombre}
+            onChange={handleChange}
+            className="w-full px-4 py-2.5 bg-[#e9e2e6] rounded-xl outline-none focus:ring-2 focus:ring-[#482845]/30 transition"
+          />
+        </div>
+        <div className="space-y-1">
+          <label htmlFor="cf-apellido" className="text-[15px] font-semibold text-[#482845]">
+            Apellido*
+          </label>
+          <input
+            id="cf-apellido"
+            name="apellido"
+            type="text"
+            required
+            value={formData.apellido}
+            onChange={handleChange}
+            className="w-full px-4 py-2.5 bg-[#e9e2e6] rounded-xl outline-none focus:ring-2 focus:ring-[#482845]/30 transition"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <label htmlFor="cf-email" className="text-[15px] font-semibold text-[#482845]">
+            Correo*
+          </label>
+          <input
+            id="cf-email"
+            name="email"
+            type="email"
+            required
+            value={formData.email}
+            onChange={handleChange}
+            className="w-full px-4 py-2.5 bg-[#e9e2e6] rounded-xl outline-none focus:ring-2 focus:ring-[#482845]/30 transition"
+          />
+        </div>
+        <div className="space-y-1">
+          <label htmlFor="cf-telefono" className="text-[15px] font-semibold text-[#482845]">
+            Teléfono*
+          </label>
+          <input
+            id="cf-telefono"
+            name="telefono"
+            type="tel"
+            required
+            value={formData.telefono}
+            onChange={handleChange}
+            className="w-full px-4 py-2.5 bg-[#e9e2e6] rounded-xl outline-none focus:ring-2 focus:ring-[#482845]/30 transition"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-1 mt-2">
+        <label htmlFor="cf-servicio" className="text-[15px] font-semibold text-[#482845]">
+          ¿Qué tipo de servicios estás buscando?*
+        </label>
+        <textarea
+          id="cf-servicio"
+          name="servicio"
+          rows={3}
+          required
+          value={formData.servicio}
+          onChange={handleChange}
+          className="w-full px-4 py-3 bg-[#e9e2e6] rounded-xl outline-none resize-none focus:ring-2 focus:ring-[#482845]/30 transition"
+        />
+      </div>
+
+      <div className="flex items-start gap-3 mt-4">
+        <input
+          id="cf-consentimiento"
+          type="checkbox"
+          checked={formData.consentimiento}
+          onChange={handleCheckbox}
+          className="mt-1 w-4 h-4 rounded border-gray-300 accent-[#482845] cursor-pointer"
+        />
+        <label htmlFor="cf-consentimiento" className="text-[11px] text-[#482845] leading-tight font-medium cursor-pointer">
+          Al dar click en esta casilla, Ud. ofrece a ALP SOLUCIONES &amp; SERVICIOS C.A., su consentimiento para que
+          tratemos sus datos personales con la finalidad de ser contactado y atender su petición. Para conocer las
+          condiciones relativas a la privacidad de sus datos personales, puede consultar nuestra Política de
+          Privacidad{" "}
+          <span className="text-[#fe6333] hover:underline">aquí</span>
+        </label>
+      </div>
+
+      {/* Google reCAPTCHA v2 */}
+      <div className="mt-4">
+        <ReCAPTCHA
+          ref={recaptchaRef}
+          sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
+        />
+      </div>
+
+      {/* Error */}
+      {feedback.type === "error" && (
+        <div className="flex items-center gap-2 text-red-700 text-sm font-medium bg-red-50 border border-red-200 px-3 py-2 rounded-lg">
+          <XCircle className="w-4 h-4 flex-shrink-0" />
+          {feedback.message}
+        </div>
+      )}
+
       <button
         type="submit"
-        disabled={isSubmitting || isLoadingCaptcha || !captcha?.token}
-        className="w-full bg-accent hover:bg-primary text-white font-bold py-4 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-lg hover:shadow-xl group disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:bg-accent"
+        disabled={isSubmitting}
+        className="w-full bg-[#fe6333] hover:bg-[#eb5b2f] disabled:opacity-60 disabled:cursor-not-allowed text-white text-lg font-medium py-3 rounded-md transition-colors mt-4 flex items-center justify-center gap-2"
       >
         {isSubmitting ? (
-          <Loader2 className="w-5 h-5 animate-spin" />
+          <>
+            <Loader2 className="w-5 h-5 animate-spin" />
+            Enviando…
+          </>
         ) : (
-          <Send className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+          "Enviar"
         )}
-        {isSubmitting ? "Enviando..." : "Enviar Consulta"}
       </button>
-
-      {feedback.type !== "idle" && (
-        <p
-          className={`text-sm font-medium ${
-            feedback.type === "success" ? "text-emerald-600" : "text-rose-600"
-          }`}
-        >
-          {feedback.message}
-        </p>
-      )}
     </form>
   );
 }
