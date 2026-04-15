@@ -1,5 +1,6 @@
-import Link from "next/link";
-import ContactForm from "./ContactForm";
+import dynamic from "next/dynamic";
+
+const ContactForm = dynamic(() => import("./ContactForm"), { ssr: false });
 
 export default function Hero() {
   return (

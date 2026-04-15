@@ -1,21 +1,13 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useState } from "react";
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
 
 declare global {
   interface Window {
     grecaptcha: {
-      render: (
-        container: HTMLElement,
-        parameters: {
-          sitekey: string;
-          "expired-callback"?: () => void;
-        }
-      ) => number;
-      getResponse: (widgetId: number) => string;
-      reset: (widgetId: number) => void;
-      ready: (callback: () => void) => void;
+      getResponse: (widgetId?: number) => string;
+      reset: (widgetId?: number) => void;
     };
   }
 }
@@ -50,37 +42,7 @@ export default function ContactForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<Feedback>({ type: "idle", message: "" });
 
-  const captchaContainerRef = useRef<HTMLDivElement>(null);
-  const widgetIdRef = useRef<number | null>(null);
-
-  // Renderizar el widget de reCAPTCHA v2 manualmente (sin paquete externo)
-  useEffect(() => {
-    const sitekey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
-    if (!sitekey || !captchaContainerRef.current) return;
-
-    const renderWidget = () => {
-      if (!captchaContainerRef.current || widgetIdRef.current !== null) return;
-      widgetIdRef.current = window.grecaptcha.render(captchaContainerRef.current, {
-        sitekey,
-        "expired-callback": () => {
-          // El token expiró; el usuario tendrá que volver a completarlo
-        },
-      });
-    };
-
-    // Intentar renderizar si la API ya cargó, si no, esperar
-    if (typeof window !== "undefined" && window.grecaptcha?.render) {
-      window.grecaptcha.ready(renderWidget);
-    } else {
-      const interval = setInterval(() => {
-        if (window.grecaptcha?.render) {
-          window.grecaptcha.ready(renderWidget);
-          clearInterval(interval);
-        }
-      }, 150);
-      return () => clearInterval(interval);
-    }
-  }, []);
+  const sitekey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
 
   const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target;
@@ -100,11 +62,10 @@ export default function ContactForm() {
       return;
     }
 
-    const sitekey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+    // Leer token del widget reCAPTCHA v2 (auto-renderizado por Google)
     let recaptchaToken = "";
-
-    if (sitekey && widgetIdRef.current !== null) {
-      recaptchaToken = window.grecaptcha.getResponse(widgetIdRef.current);
+    if (sitekey) {
+      recaptchaToken = window.grecaptcha?.getResponse() ?? "";
       if (!recaptchaToken) {
         setFeedback({ type: "error", message: "Por favor completa el captcha de verificación." });
         return;
@@ -135,7 +96,7 @@ export default function ContactForm() {
           type: "error",
           message: data.error ?? "No se pudo enviar tu consulta. Intenta nuevamente.",
         });
-        if (widgetIdRef.current !== null) window.grecaptcha.reset(widgetIdRef.current);
+        window.grecaptcha?.reset();
         return;
       }
 
@@ -144,13 +105,13 @@ export default function ContactForm() {
         message: data.message ?? "Tu consulta fue enviada correctamente.",
       });
       setFormData(INITIAL_FORM);
-      if (widgetIdRef.current !== null) window.grecaptcha.reset(widgetIdRef.current);
+      window.grecaptcha?.reset();
     } catch {
       setFeedback({
         type: "error",
         message: "Error de conexión. Verifica tu internet e intenta nuevamente.",
       });
-      if (widgetIdRef.current !== null) window.grecaptcha.reset(widgetIdRef.current);
+      window.grecaptcha?.reset();
     } finally {
       setIsSubmitting(false);
     }
@@ -282,10 +243,11 @@ export default function ContactForm() {
         </label>
       </div>
 
-      {/* Widget reCAPTCHA v2 renderizado manualmente */}
-      {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
+      {/* Widget reCAPTCHA v2 — auto-renderizado por Google al detectar .g-recaptcha */}
+      {sitekey && (
         <div className="mt-4">
-          <div ref={captchaContainerRef} />
+          {/* eslint-disable-next-line tailwindcss/no-custom-classname */}
+          <div className="g-recaptcha" data-sitekey={sitekey} />
         </div>
       )}
 
