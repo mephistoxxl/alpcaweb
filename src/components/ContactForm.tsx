@@ -1,8 +1,16 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useRef, useState } from "react";
-import ReCAPTCHA from "react-google-recaptcha";
+import { ChangeEvent, FormEvent, useState } from "react";
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
+
+declare global {
+  interface Window {
+    grecaptcha: {
+      ready: (callback: () => void) => void;
+      execute: (sitekey: string, options: { action: string }) => Promise<string>;
+    };
+  }
+}
 
 type FormData = {
   nombre: string;
@@ -33,7 +41,6 @@ export default function ContactForm() {
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<Feedback>({ type: "idle", message: "" });
-  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target;
@@ -53,17 +60,24 @@ export default function ContactForm() {
       return;
     }
 
-    const recaptchaToken = recaptchaRef.current?.getValue() ?? "";
-    const sitekeyConfigured = Boolean(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY);
-
-    if (sitekeyConfigured && !recaptchaToken) {
-      setFeedback({ type: "error", message: "Por favor completa el captcha de verificación." });
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
+      // Obtener token de reCAPTCHA v3 (invisible, sin interacción del usuario)
+      const sitekey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+      let recaptchaToken = "";
+
+      if (sitekey && typeof window !== "undefined" && window.grecaptcha) {
+        recaptchaToken = await new Promise<string>((resolve, reject) => {
+          window.grecaptcha.ready(() => {
+            window.grecaptcha
+              .execute(sitekey, { action: "contact" })
+              .then(resolve)
+              .catch(reject);
+          });
+        });
+      }
+
       const response = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -85,7 +99,6 @@ export default function ContactForm() {
           type: "error",
           message: data.error ?? "No se pudo enviar tu consulta. Intenta nuevamente.",
         });
-        recaptchaRef.current?.reset();
         return;
       }
 
@@ -94,13 +107,11 @@ export default function ContactForm() {
         message: data.message ?? "Tu consulta fue enviada correctamente.",
       });
       setFormData(INITIAL_FORM);
-      recaptchaRef.current?.reset();
     } catch {
       setFeedback({
         type: "error",
         message: "Error de conexión. Verifica tu internet e intenta nuevamente.",
       });
-      recaptchaRef.current?.reset();
     } finally {
       setIsSubmitting(false);
     }
@@ -232,20 +243,6 @@ export default function ContactForm() {
         </label>
       </div>
 
-      {/* Google reCAPTCHA v2 */}
-      {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ? (
-        <div className="mt-4">
-          <ReCAPTCHA
-            ref={recaptchaRef}
-            sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
-          />
-        </div>
-      ) : (
-        <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-3 py-2 rounded-lg mt-4">
-          reCAPTCHA no configurado en entorno local. Funcionará correctamente en producción.
-        </p>
-      )}
-
       {/* Error */}
       {feedback.type === "error" && (
         <div className="flex items-center gap-2 text-red-700 text-sm font-medium bg-red-50 border border-red-200 px-3 py-2 rounded-lg">
@@ -268,6 +265,17 @@ export default function ContactForm() {
           "Enviar"
         )}
       </button>
+
+      {/* Nota reCAPTCHA v3 */}
+      {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
+        <p className="text-[10px] text-slate-400 text-center leading-tight">
+          Este sitio está protegido por reCAPTCHA.{" "}
+          <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="underline">Privacidad</a>
+          {" "}y{" "}
+          <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="underline">Términos</a>
+          {" "}de Google.
+        </p>
+      )}
     </form>
   );
 }

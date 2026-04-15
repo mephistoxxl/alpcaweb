@@ -37,8 +37,12 @@ async function verifyRecaptcha(token: string): Promise<boolean> {
     body: `secret=${secret}&response=${token}`,
   });
 
-  const data = (await res.json()) as { success: boolean };
-  return data.success === true;
+  const data = (await res.json()) as { success: boolean; score?: number };
+  if (!data.success) return false;
+  // v3 devuelve score (0.0 = bot, 1.0 = humano). >= 0.5 se considera humano.
+  // v2 no devuelve score, solo success.
+  if (typeof data.score === "number") return data.score >= 0.5;
+  return true;
 }
 
 async function sendViaZeptoMail(payload: {
