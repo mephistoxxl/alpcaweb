@@ -1,13 +1,21 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
 
 declare global {
   interface Window {
     grecaptcha: {
+      render: (
+        container: HTMLElement,
+        parameters: {
+          sitekey: string;
+          "expired-callback"?: () => void;
+        }
+      ) => number;
+      getResponse: (widgetId: number) => string;
+      reset: (widgetId: number) => void;
       ready: (callback: () => void) => void;
-      execute: (sitekey: string, options: { action: string }) => Promise<string>;
     };
   }
 }
@@ -42,6 +50,38 @@ export default function ContactForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<Feedback>({ type: "idle", message: "" });
 
+  const captchaContainerRef = useRef<HTMLDivElement>(null);
+  const widgetIdRef = useRef<number | null>(null);
+
+  // Renderizar el widget de reCAPTCHA v2 manualmente (sin paquete externo)
+  useEffect(() => {
+    const sitekey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+    if (!sitekey || !captchaContainerRef.current) return;
+
+    const renderWidget = () => {
+      if (!captchaContainerRef.current || widgetIdRef.current !== null) return;
+      widgetIdRef.current = window.grecaptcha.render(captchaContainerRef.current, {
+        sitekey,
+        "expired-callback": () => {
+          // El token expiró; el usuario tendrá que volver a completarlo
+        },
+      });
+    };
+
+    // Intentar renderizar si la API ya cargó, si no, esperar
+    if (typeof window !== "undefined" && window.grecaptcha?.render) {
+      window.grecaptcha.ready(renderWidget);
+    } else {
+      const interval = setInterval(() => {
+        if (window.grecaptcha?.render) {
+          window.grecaptcha.ready(renderWidget);
+          clearInterval(interval);
+        }
+      }, 150);
+      return () => clearInterval(interval);
+    }
+  }, []);
+
   const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -60,24 +100,20 @@ export default function ContactForm() {
       return;
     }
 
+    const sitekey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+    let recaptchaToken = "";
+
+    if (sitekey && widgetIdRef.current !== null) {
+      recaptchaToken = window.grecaptcha.getResponse(widgetIdRef.current);
+      if (!recaptchaToken) {
+        setFeedback({ type: "error", message: "Por favor completa el captcha de verificación." });
+        return;
+      }
+    }
+
     setIsSubmitting(true);
 
     try {
-      // Obtener token de reCAPTCHA v3 (invisible, sin interacción del usuario)
-      const sitekey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
-      let recaptchaToken = "";
-
-      if (sitekey && typeof window !== "undefined" && window.grecaptcha) {
-        recaptchaToken = await new Promise<string>((resolve, reject) => {
-          window.grecaptcha.ready(() => {
-            window.grecaptcha
-              .execute(sitekey, { action: "contact" })
-              .then(resolve)
-              .catch(reject);
-          });
-        });
-      }
-
       const response = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -99,6 +135,7 @@ export default function ContactForm() {
           type: "error",
           message: data.error ?? "No se pudo enviar tu consulta. Intenta nuevamente.",
         });
+        if (widgetIdRef.current !== null) window.grecaptcha.reset(widgetIdRef.current);
         return;
       }
 
@@ -107,11 +144,13 @@ export default function ContactForm() {
         message: data.message ?? "Tu consulta fue enviada correctamente.",
       });
       setFormData(INITIAL_FORM);
+      if (widgetIdRef.current !== null) window.grecaptcha.reset(widgetIdRef.current);
     } catch {
       setFeedback({
         type: "error",
         message: "Error de conexión. Verifica tu internet e intenta nuevamente.",
       });
+      if (widgetIdRef.current !== null) window.grecaptcha.reset(widgetIdRef.current);
     } finally {
       setIsSubmitting(false);
     }
@@ -243,6 +282,13 @@ export default function ContactForm() {
         </label>
       </div>
 
+      {/* Widget reCAPTCHA v2 renderizado manualmente */}
+      {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
+        <div className="mt-4">
+          <div ref={captchaContainerRef} />
+        </div>
+      )}
+
       {/* Error */}
       {feedback.type === "error" && (
         <div className="flex items-center gap-2 text-red-700 text-sm font-medium bg-red-50 border border-red-200 px-3 py-2 rounded-lg">
@@ -265,17 +311,6 @@ export default function ContactForm() {
           "Enviar"
         )}
       </button>
-
-      {/* Nota reCAPTCHA v3 */}
-      {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
-        <p className="text-[10px] text-slate-400 text-center leading-tight">
-          Este sitio está protegido por reCAPTCHA.{" "}
-          <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="underline">Privacidad</a>
-          {" "}y{" "}
-          <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="underline">Términos</a>
-          {" "}de Google.
-        </p>
-      )}
     </form>
   );
 }
