@@ -1,5 +1,6 @@
 "use client";
 
+import Script from "next/script";
 import { ChangeEvent, FormEvent, useState } from "react";
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
 
@@ -243,11 +244,15 @@ export default function ContactForm() {
         </label>
       </div>
 
-      {/* Widget reCAPTCHA v2 — auto-renderizado por Google al detectar .g-recaptcha */}
+      {/* Widget reCAPTCHA v2 — el script carga aquí para garantizar que el div ya existe */}
       {sitekey && (
         <div className="mt-4">
           {/* eslint-disable-next-line tailwindcss/no-custom-classname */}
           <div className="g-recaptcha" data-sitekey={sitekey} />
+          <Script
+            src="https://www.google.com/recaptcha/api.js"
+            strategy="afterInteractive"
+          />
         </div>
       )}
 
