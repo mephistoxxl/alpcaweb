@@ -44,13 +44,13 @@ export default function BillerPage() {
             Sistema Actualizado (Offline / Online) SRI
           </div>
           <h1 className="text-4xl md:text-6xl font-extrabold text-white tracking-tight mb-8">
-            Revoluciona tu forma de <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-light to-accent">Facturar</span>
+            Facturación electrónica <span className="text-white underline decoration-accent decoration-4 underline-offset-4">fácil y rápida</span>
           </h1>
           <p className="text-xl text-slate-300 md:w-2/3 mx-auto leading-relaxed mb-10">
-            Olvídate de los blocs de notas y los sistemas lentos. Emite facturas electrónicas válidas por el SRI en segundos, reduciendo errores y ahorrando papel.
+            Emite tus comprobantes electrónicos válidos ante el SRI de forma sencilla, desde cualquier dispositivo y sin complicaciones.
           </p>
           <div className="flex justify-center gap-4">
-            <Link href="#contacto" className="bg-accent hover:bg-accent-light text-white px-8 py-3.5 rounded-lg text-lg font-bold transition-all shadow-xl hover:shadow-accent/40 flex items-center gap-2 group">
+            <Link href="https://wa.link/s7coni" target="_blank" rel="noopener noreferrer" className="bg-accent hover:bg-accent-light text-white px-8 py-3.5 rounded-lg text-lg font-bold transition-all shadow-xl hover:shadow-accent/40 flex items-center gap-2 group">
               Solicitar un Demo
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
@@ -96,15 +96,15 @@ export default function BillerPage() {
               <ul className="space-y-4">
                 <li className="flex items-center gap-3">
                   <CheckCircle className="w-6 h-6 text-accent-light flex-shrink-0" />
-                  <span>Cero costos de imprenta (blocs físicos).</span>
+                  <span>Emite facturas, notas de crédito y retenciones en segundos.</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <CheckCircle className="w-6 h-6 text-accent-light flex-shrink-0" />
-                  <span>Cero bodegas o carpetas para archivadores.</span>
+                  <span>Interfaz sencilla e intuitiva, lista para usar desde el primer día.</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <CheckCircle className="w-6 h-6 text-accent-light flex-shrink-0" />
-                  <span>Tus facturas nunca se pierden, se respaldan en servidores cloud.</span>
+                  <span>Historial completo de comprobantes disponible en cualquier momento.</span>
                 </li>
               </ul>
             </div>
@@ -112,9 +112,9 @@ export default function BillerPage() {
             <div className="md:w-1/2 flex justify-center">
               <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl text-center">
                  <h3 className="text-primary font-bold text-2xl mb-2">Plan Inicial</h3>
-                 <div className="text-5xl font-black text-accent mb-4">$X <span className="text-lg text-slate-500 font-normal">/ anual</span></div>
+                 <div className="text-5xl font-black text-accent mb-4">$9.99 <span className="text-lg text-slate-500 font-normal">/ anual</span></div>
                  <p className="text-slate-600 text-sm mb-8 font-medium">Contacta a nuestro equipo para armar el paquete que se ajuste al volumen de tu empresa.</p>
-                 <Link href="#contacto" className="block w-full bg-slate-900 hover:bg-primary text-white py-3 rounded-lg font-bold transition-colors">
+                 <Link href="https://wa.link/s7coni" target="_blank" rel="noopener noreferrer" className="block w-full bg-slate-900 hover:bg-primary text-white py-3 rounded-lg font-bold transition-colors">
                    Cotizar Sistema
                  </Link>
               </div>
