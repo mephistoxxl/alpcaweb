@@ -49,7 +49,7 @@ export default function SASPage() {
               Las Sociedades por Acciones Simplificadas (SAS) son la mejor figura societaria para formalizar tu negocio en Ecuador. Deja la burocracia en nuestras manos y opera legalmente en tiempo récord.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="#contacto" className="bg-primary hover:bg-primary/90 text-white px-8 py-3.5 rounded-lg text-sm md:text-base font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group">
+              <Link href="https://wa.link/pjaeq5" target="_blank" rel="noopener noreferrer" className="bg-primary hover:bg-primary/90 text-white px-8 py-3.5 rounded-lg text-sm md:text-base font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group">
                 Quiero constituir mi SAS
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
