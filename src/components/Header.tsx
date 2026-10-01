@@ -94,6 +94,18 @@ export default function Header() {
               >
                 Solicitar Asesoría
               </Link>
+              <a
+                href="https://wa.me/593998280611"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Contactar por WhatsApp"
+                className="hidden md:inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-md text-sm font-semibold transition-colors shadow-sm"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M20.52 3.48A11.82 11.82 0 0 0 12.1 0C5.57 0 .25 5.32.25 11.85c0 2.09.55 4.13 1.59 5.93L.15 24l6.38-1.67a11.82 11.82 0 0 0 5.57 1.42h.01c6.53 0 11.85-5.32 11.85-11.85 0-3.17-1.23-6.15-3.44-8.42ZM12.11 21.7h-.01a9.82 9.82 0 0 1-5.01-1.37l-.36-.21-3.79.99 1.01-3.69-.23-.38a9.82 9.82 0 1 1 8.39 4.66Zm5.39-7.36c-.29-.15-1.72-.85-1.99-.95-.27-.1-.46-.15-.66.15-.19.29-.75.95-.92 1.15-.17.19-.34.22-.63.07-.29-.15-1.2-.44-2.28-1.4-.84-.75-1.41-1.67-1.57-1.96-.16-.29-.02-.45.12-.6.13-.13.29-.34.44-.51.15-.17.19-.29.29-.48.1-.19.05-.36-.02-.51-.07-.15-.66-1.59-.9-2.18-.24-.57-.48-.49-.66-.5h-.56c-.19 0-.51.07-.78.36-.27.29-1.02 1-1.02 2.43s1.05 2.82 1.2 3.01c.15.19 2.07 3.16 5.02 4.43.7.3 1.24.48 1.66.61.7.22 1.33.19 1.83.12.56-.08 1.72-.7 1.96-1.38.24-.68.24-1.27.17-1.39-.07-.12-.27-.19-.56-.34Z" />
+                </svg>
+                WhatsApp
+              </a>
 
               {/* Botón hamburguesa — solo móvil */}
               <button
@@ -181,12 +193,25 @@ export default function Header() {
 
         {/* CTA al fondo del drawer */}
         <div className="px-6 py-6 border-t border-slate-100">
-          <Link
-            href="/contacto"
-            className="block w-full text-center bg-accent hover:bg-primary-light text-white px-6 py-3 rounded-md text-sm font-semibold transition-colors shadow-sm"
-          >
-            Solicitar Asesoría
-          </Link>
+          <div className="flex gap-2">
+            <Link
+              href="/contacto"
+              className="flex-1 text-center bg-accent hover:bg-primary-light text-white px-3 py-3 rounded-md text-sm font-semibold transition-colors shadow-sm"
+            >
+              Solicitar Asesoría
+            </Link>
+            <a
+              href="https://wa.me/593998280611"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Contactar por WhatsApp"
+              className="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white px-3 py-3 rounded-md transition-colors shadow-sm"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M20.52 3.48A11.82 11.82 0 0 0 12.1 0C5.57 0 .25 5.32.25 11.85c0 2.09.55 4.13 1.59 5.93L.15 24l6.38-1.67a11.82 11.82 0 0 0 5.57 1.42h.01c6.53 0 11.85-5.32 11.85-11.85 0-3.17-1.23-6.15-3.44-8.42ZM12.11 21.7h-.01a9.82 9.82 0 0 1-5.01-1.37l-.36-.21-3.79.99 1.01-3.69-.23-.38a9.82 9.82 0 1 1 8.39 4.66Zm5.39-7.36c-.29-.15-1.72-.85-1.99-.95-.27-.1-.46-.15-.66.15-.19.29-.75.95-.92 1.15-.17.19-.34.22-.63.07-.29-.15-1.2-.44-2.28-1.4-.84-.75-1.41-1.67-1.57-1.96-.16-.29-.02-.45.12-.6.13-.13.29-.34.44-.51.15-.17.19-.29.29-.48.1-.19.05-.36-.02-.51-.07-.15-.66-1.59-.9-2.18-.24-.57-.48-.49-.66-.5h-.56c-.19 0-.51.07-.78.36-.27.29-1.02 1-1.02 2.43s1.05 2.82 1.2 3.01c.15.19 2.07 3.16 5.02 4.43.7.3 1.24.48 1.66.61.7.22 1.33.19 1.83.12.56-.08 1.72-.7 1.96-1.38.24-.68.24-1.27.17-1.39-.07-.12-.27-.19-.56-.34Z" />
+              </svg>
+            </a>
+          </div>
         </div>
       </div>
     </>

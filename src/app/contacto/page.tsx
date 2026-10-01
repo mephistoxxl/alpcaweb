@@ -70,7 +70,7 @@ export default function ContactPage() {
                     <Phone className="w-6 h-6 text-accent mt-1 flex-shrink-0" />
                     <div>
                       <h3 className="font-semibold text-slate-200 mb-1">Atención Nacional</h3>
-                      <p className="text-slate-400 text-sm">0991116753<br/>Lunes a Viernes, 08:30 - 17:30</p>
+                      <p className="text-slate-400 text-sm">99 828 0611<br/>Lunes a Viernes, 08:30 - 17:30</p>
                     </div>
                   </div>
                   

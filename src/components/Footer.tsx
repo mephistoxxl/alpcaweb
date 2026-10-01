@@ -26,7 +26,7 @@ export default function Footer() {
                     <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
                   </svg>
                </a>
-               <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-accent hover:-translate-y-1 transition-all duration-300 cursor-pointer text-white shadow-sm" aria-label="WhatsApp">
+              <a href="https://wa.me/593998280611" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-accent hover:-translate-y-1 transition-all duration-300 cursor-pointer text-white shadow-sm" aria-label="WhatsApp">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
                     <path d="M16.2 14c-.2-.1-1.2-.6-1.4-.7-.2-.1-.3-.1-.4.1-.1.2-.5.7-.6.8-.1.1-.3.2-.5.1-.2-.1-1-.4-1.9-1.2-.7-.6-1.2-1.4-1.3-1.6-.1-.2 0-.3.1-.4.1-.1.2-.2.3-.3.1-.1.2-.2.2-.4s-.1-.4-.2-.5c-.1-.2-.4-1-.6-1.4-.1-.3-.3-.3-.4-.3h-.4c-.1 0-.3.1-.5.2-.2.2-.8.8-.8 2 0 1.2.8 2.3.9 2.5.1.2 1.7 2.6 4.2 3.6.6.2 1.1.4 1.5.5.6.2 1.2.2 1.7.1.5-.1 1.6-.6 1.8-1.2.2-.6.2-1.1.1-1.2-.2-.2-.4-.2-.6-.3z" />
@@ -55,7 +55,7 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-4 h-4 text-accent shrink-0" />
-                <span>0991116753</span>
+                <span>99 828 0611</span>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-4 h-4 text-accent shrink-0" />
